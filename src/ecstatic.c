@@ -142,7 +142,7 @@ void ecs_process(struct ecs_world *world, int si) {
     assert(system->compare == NULL);
 
     for (uint32_t id = 0; id < world->max; ++id) {
-        if (ecs_match(world, id, system->require, system->exclude));
+        if (ecs_match(world, id, system->require, system->exclude))
             system->process(world, id);
     }
 }

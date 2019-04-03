@@ -114,7 +114,8 @@ static inline bool ecs_match(struct ecs_world *world, uint32_t id, uint64_t requ
     assert((require & exclude) == 0);
 
     uint64_t mask = world->masks[id];
-    return (mask & require) == require && ((mask & exclude) == 0);
+    return (mask & require) == require;
+//    return (mask & require) == require && ((mask & exclude) == 0);
 }
 
 #endif //ECSTATIC_ECS_H

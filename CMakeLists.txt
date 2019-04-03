@@ -3,4 +3,7 @@ project(ECStatic C)
 
 set(CMAKE_C_STANDARD 99)
 
-add_library(ECStatic ecstatic.c ecstatic.h)
+add_subdirectory(examples)
+
+add_library(ECStatic src/ecstatic.c src/ecstatic.h)
+target_include_directories(ECStatic PUBLIC ${CMAKE_SOURCE_DIR}/src)
