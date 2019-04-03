@@ -4,18 +4,23 @@
 #include <inttypes.h>
 #include <stdio.h>
 
-// Component IDs
+// Component indices and masks
 
-enum ecs_comp_id {
-    ECS_COMP_EXISTS,
-    ECS_COMP_POS,
-    ECS_COMP_VEL,
+#define ECS_COMPS(C) \
+    C(EXISTS, struct {}) \
+    C(POS, struct vec2) \
+    C(VEL, struct vec2)
+
+#define ECS_EXPAND_INDEX(name, ...) ECS_COMP_ ## name,
+
+#define ECS_EXPAND_MASK(name, ...) ECS_MASK_ ## name = 1ULL << ECS_COMP_ ## name,
+
+enum ecs_comp_index {
+    ECS_COMPS(ECS_EXPAND_INDEX)
 };
 
 enum ecs_comp_mask {
-    ECS_MASK_EXISTS = 1ULL << ECS_COMP_EXISTS,
-    ECS_MASK_POS = 1ULL << ECS_COMP_POS,
-    ECS_MASK_VEL = 1ULL << ECS_COMP_VEL,
+    ECS_COMPS(ECS_EXPAND_MASK)
 };
 
 // Component types
@@ -26,16 +31,16 @@ struct vec2 {
 
 // System callbacks
 
-static void process_move(struct ecs_world * world, uint32_t id) {
-    struct vec2 * pos = ecs_get(world, id, ECS_COMP_POS);
-    struct vec2 * vel = ecs_get(world, id, ECS_COMP_VEL);
+static void process_move(struct ecs_world *world, uint32_t id) {
+    struct vec2 *pos = ecs_get(world, id, ECS_COMP_POS);
+    struct vec2 *vel = ecs_get(world, id, ECS_COMP_VEL);
 
     pos->x += vel->x;
     pos->y += vel->y;
 }
 
-static void process_debug(struct ecs_world * world, uint32_t id) {
-    printf("%" PRIu32, (unsigned int)id);
+static void process_debug(struct ecs_world *world, uint32_t id) {
+    printf("%" PRIu32, (unsigned int) id);
 
     if (ecs_has(world, id, ECS_COMP_POS)) {
         struct vec2 *pos = ecs_get(world, id, ECS_COMP_POS);
@@ -50,6 +55,8 @@ static void process_debug(struct ecs_world * world, uint32_t id) {
     puts("");
 }
 
+#define ECS_EXPAND_REG(name, type, ...) \
+    ecs_register_comp(&world, &(struct ecs_comp){ .size = sizeof(type), __VA_ARGS__ });
 
 int main() {
     struct ecs_world world;
@@ -57,19 +64,16 @@ int main() {
     // World setup
 
     ecs_init_world(&world, 10);
+    ECS_COMPS(ECS_EXPAND_REG)
 
-    ecs_register_comp(&world, &(struct ecs_comp){ .size = 0 });
-    ecs_register_comp(&world, &(struct ecs_comp){ .size = sizeof(struct vec2) });
-    ecs_register_comp(&world, &(struct ecs_comp){ .size = sizeof(struct vec2) });
+    int system_move = ecs_register_system(&world, &(struct ecs_system) {
+            .require = ECS_MASK_POS | ECS_MASK_VEL | ECS_MASK_EXISTS,
+            .process = process_move,
+    });
 
-    int system_move = ecs_register_system(&world, &(struct ecs_system){
-        .require = ECS_MASK_POS | ECS_MASK_VEL | ECS_MASK_EXISTS,
-        .process = process_move,
-        });
-
-    int system_debug = ecs_register_system(&world, &(struct ecs_system){
-        .require = ECS_MASK_EXISTS,
-        .process = process_debug,
+    int system_debug = ecs_register_system(&world, &(struct ecs_system) {
+            .require = ECS_MASK_EXISTS,
+            .process = process_debug,
     });
 
     // Entity setup
@@ -78,7 +82,7 @@ int main() {
         uint32_t id = ecs_create(&world);
 
         // Every entity has a position
-        struct vec2 * pos = ecs_add(&world, id, ECS_COMP_POS);
+        struct vec2 *pos = ecs_add(&world, id, ECS_COMP_POS);
         pos->x = i;
         pos->y = 0;
 
