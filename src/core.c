@@ -1,4 +1,4 @@
-#include "ecstatic.h"
+#include "core.h"
 
 #include <string.h>
 
