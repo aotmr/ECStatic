@@ -2,11 +2,11 @@
 
 #include <string.h>
 
-void ecs_init_world(struct ecs_world *world, uint32_t max) {
+void ecs_init_world(ecs_world *world, uint32_t max) {
     assert(world != NULL);
     assert(max < UINT32_MAX);
 
-    memset(world, 0, sizeof(struct ecs_world));
+    memset(world, 0, sizeof(ecs_world));
 
     world->max = max;
 
@@ -17,7 +17,7 @@ void ecs_init_world(struct ecs_world *world, uint32_t max) {
     world->masks = calloc(max, sizeof(uint64_t));
 }
 
-void ecs_release_world(struct ecs_world *world) {
+void ecs_release_world(ecs_world *world) {
     assert(world != NULL);
 
     for (uint32_t id = 0; id < world->max; ++id) {
@@ -33,10 +33,10 @@ void ecs_release_world(struct ecs_world *world) {
 //    for (int i = 0; i < world->systems_num; ++i)
 //        free(world->systems[i].set);
 
-    memset(world, 0, sizeof(struct ecs_world));
+    memset(world, 0, sizeof(ecs_world));
 }
 
-int ecs_register_comp(struct ecs_world *world, const struct ecs_comp *comp) {
+int ecs_register_comp(ecs_world *world, const ecs_comp *comp) {
     assert(world != NULL);
     assert(comp != NULL);
 
@@ -44,13 +44,13 @@ int ecs_register_comp(struct ecs_world *world, const struct ecs_comp *comp) {
     assert(comp->data == NULL);
 
     int ci = world->comps_num++;
-    struct ecs_comp *comp2 = &world->comps[ci];
+    ecs_comp *comp2 = &world->comps[ci];
     *comp2 = *comp;
     comp2->data = calloc(world->max, comp2->size);
     return ci;
 }
 
-int ecs_register_system(struct ecs_world *world, const struct ecs_system *system) {
+int ecs_register_system(ecs_world *world, const ecs_system *system) {
     assert(world != NULL);
     assert(system != NULL);
 
@@ -60,7 +60,7 @@ int ecs_register_system(struct ecs_world *world, const struct ecs_system *system
 //    assert(system->set == NULL);
 
     int si = world->systems_num++;
-    struct ecs_system *system2 = &world->systems[si];
+    ecs_system *system2 = &world->systems[si];
     *system2 = *system;
 //    system2->set = calloc(world->max, sizeof(uint32_t));
 //    system2->set_len = 0;
@@ -70,7 +70,7 @@ int ecs_register_system(struct ecs_world *world, const struct ecs_system *system
 
 // Entity allocation
 
-uint32_t ecs_create(struct ecs_world *world) {
+uint32_t ecs_create(ecs_world *world) {
     assert(world != NULL);
 
     if (world->free_top >= world->max)
@@ -82,25 +82,24 @@ uint32_t ecs_create(struct ecs_world *world) {
     }
 }
 
-void ecs_destroy(struct ecs_world *world, uint32_t id) {
+void ecs_destroy(ecs_world *world, uint32_t id) {
     assert(world != NULL);
     assert(id < world->max);
 
-    for (int i = 0; i < 64; ++i) {
+    for (int i = 0; i < 64; ++i)
         ecs_remove(world, id, i);
-    }
 }
 
 // Component data
 
-void *ecs_add(struct ecs_world *world, uint32_t id, int ci) {
+void *ecs_add(ecs_world *world, uint32_t id, int ci) {
     assert(world != NULL);
     assert(id < world->max);
     assert(0 <= ci && ci < ECS_MAX_COMPS);
 
     assert(!ecs_has(world, id, ci));
 
-    struct ecs_comp *comp = &world->comps[ci];
+    ecs_comp *comp = &world->comps[ci];
 
     world->masks[id] |= 1ULL << ci;
     world->dirty |= 1ULL << ci;
@@ -111,14 +110,14 @@ void *ecs_add(struct ecs_world *world, uint32_t id, int ci) {
     return data;
 }
 
-void ecs_remove(struct ecs_world *world, uint32_t id, int ci) {
+void ecs_remove(ecs_world *world, uint32_t id, int ci) {
     assert(world != NULL);
     assert(id < world->max);
     assert(0 <= ci && ci < ECS_MAX_COMPS);
 
     assert(ecs_has(world, id, ci));
 
-    struct ecs_comp *comp = &world->comps[ci];
+    ecs_comp *comp = &world->comps[ci];
 
     void *data = comp->data + comp->size * id;
     if (comp->on_remove)
@@ -130,15 +129,15 @@ void ecs_remove(struct ecs_world *world, uint32_t id, int ci) {
 
 // System processing
 
-void ecs_begin(struct ecs_world *world) {
+void ecs_begin(ecs_world *world) {
 
 }
 
-void ecs_process(struct ecs_world *world, int si) {
+void ecs_process(ecs_world *world, int si) {
     assert(world != NULL);
     assert(0 <= si && si < ECS_MAX_SYSTEMS);
 
-    struct ecs_system *system = &world->systems[si];
+    ecs_system *system = &world->systems[si];
     assert(system->compare == NULL);
 
     for (uint32_t id = 0; id < world->max; ++id) {
@@ -147,12 +146,12 @@ void ecs_process(struct ecs_world *world, int si) {
     }
 }
 
-void ecs_finish(struct ecs_world *world) {
+void ecs_finish(ecs_world *world) {
     world->dirty = 0;
 }
 
 // Helper functions
 
-void ecs_free_on_remove(struct ecs_world *world, uint32_t id, int ci, void *data) {
+void ecs_free_on_remove(ecs_world *world, uint32_t id, int ci, void *data) {
     free(data);
 }

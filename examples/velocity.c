@@ -31,7 +31,7 @@ struct vec2 {
 
 // System callbacks
 
-static void process_move(struct ecs_world *world, uint32_t id) {
+static void process_move(ecs_world *world, uint32_t id) {
     struct vec2 *pos = ecs_get(world, id, ECS_COMP_POS);
     struct vec2 *vel = ecs_get(world, id, ECS_COMP_VEL);
 
@@ -39,7 +39,7 @@ static void process_move(struct ecs_world *world, uint32_t id) {
     pos->y += vel->y;
 }
 
-static void process_debug(struct ecs_world *world, uint32_t id) {
+static void process_debug(ecs_world *world, uint32_t id) {
     printf("%" PRIu32, (unsigned int) id);
 
     if (ecs_has(world, id, ECS_COMP_POS)) {
@@ -56,22 +56,22 @@ static void process_debug(struct ecs_world *world, uint32_t id) {
 }
 
 #define ECS_EXPAND_REG(name, type, ...) \
-    ecs_register_comp(&world, &(struct ecs_comp){ .size = sizeof(type), __VA_ARGS__ });
+    ecs_register_comp(&world, &(ecs_comp){ .size = sizeof(type), __VA_ARGS__ });
 
 int main() {
-    struct ecs_world world;
+    ecs_world world;
 
     // World setup
 
     ecs_init_world(&world, 10);
     ECS_COMPS(ECS_EXPAND_REG)
 
-    int system_move = ecs_register_system(&world, &(struct ecs_system) {
+    int system_move = ecs_register_system(&world, &(ecs_system) {
             .require = ECS_MASK_POS | ECS_MASK_VEL | ECS_MASK_EXISTS,
             .process = process_move,
     });
 
-    int system_debug = ecs_register_system(&world, &(struct ecs_system) {
+    int system_debug = ecs_register_system(&world, &(ecs_system) {
             .require = ECS_MASK_EXISTS,
             .process = process_debug,
     });
