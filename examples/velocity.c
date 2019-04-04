@@ -7,10 +7,12 @@
 
 // Component indices and masks
 
+/* The _ argument is used internally for passing extra data through the table
+ * (for example, the prefix of the enum members). */
 #define COMPS(X, _) \
-    X(_, EXISTS, struct {}) \
-    X(_, POS, struct vec2) \
-    X(_, VEL, struct vec2)
+    X(_, EXISTS,    struct {}) \
+    X(_, POS,       struct vec2) \
+    X(_, VEL,       struct vec2)
 
 struct vec2 {
     float x, y;
