@@ -1,4 +1,4 @@
-#include "core.h"
+#include "ecs_core.h"
 
 #include <string.h>
 
@@ -21,8 +21,8 @@ void ecs_release_world(ecs_world *world) {
     assert(world != NULL);
 
     for (uint32_t id = 0; id < world->max; ++id) {
-        if (ecs_has(world, id, 0))
-            ecs_remove(world, id, 0);
+        if (ecs_entity_has(world, id, 0))
+            ecs_entity_remove(world, id, 0);
     }
     free(world->free_list);
     free(world->masks);
@@ -70,34 +70,34 @@ int ecs_register_system(ecs_world *world, const ecs_system *system) {
 
 // Entity allocation
 
-uint32_t ecs_create(ecs_world *world) {
+uint32_t ecs_create_entity(ecs_world *world) {
     assert(world != NULL);
 
     if (world->free_top >= world->max)
         return ECS_NULL_ENTITY;
     else {
         uint32_t id = world->free_list[world->free_top++];
-        ecs_add(world, id, 0);
+        ecs_entity_add(world, id, 0);
         return id;
     }
 }
 
-void ecs_destroy(ecs_world *world, uint32_t id) {
+void ecs_destroy_entity(ecs_world *world, uint32_t id) {
     assert(world != NULL);
     assert(id < world->max);
 
     for (int i = 0; i < 64; ++i)
-        ecs_remove(world, id, i);
+        ecs_entity_remove(world, id, i);
 }
 
 // Component data
 
-void *ecs_add(ecs_world *world, uint32_t id, int ci) {
+void *ecs_entity_add(ecs_world *world, uint32_t id, int ci) {
     assert(world != NULL);
     assert(id < world->max);
     assert(0 <= ci && ci < ECS_MAX_COMPS);
 
-    assert(!ecs_has(world, id, ci));
+    assert(!ecs_entity_has(world, id, ci));
 
     ecs_comp *comp = &world->comps[ci];
 
@@ -110,12 +110,12 @@ void *ecs_add(ecs_world *world, uint32_t id, int ci) {
     return data;
 }
 
-void ecs_remove(ecs_world *world, uint32_t id, int ci) {
+void ecs_entity_remove(ecs_world *world, uint32_t id, int ci) {
     assert(world != NULL);
     assert(id < world->max);
     assert(0 <= ci && ci < ECS_MAX_COMPS);
 
-    assert(ecs_has(world, id, ci));
+    assert(ecs_entity_has(world, id, ci));
 
     ecs_comp *comp = &world->comps[ci];
 
@@ -129,11 +129,11 @@ void ecs_remove(ecs_world *world, uint32_t id, int ci) {
 
 // System processing
 
-void ecs_begin(ecs_world *world) {
+void ecs_process_begin(ecs_world *world) {
 
 }
 
-void ecs_process(ecs_world *world, int si) {
+void ecs_process_system(ecs_world *world, int si) {
     assert(world != NULL);
     assert(0 <= si && si < ECS_MAX_SYSTEMS);
 
@@ -141,12 +141,12 @@ void ecs_process(ecs_world *world, int si) {
     assert(system->compare == NULL);
 
     for (uint32_t id = 0; id < world->max; ++id) {
-        if (ecs_match(world, id, system->require, system->exclude))
+        if (ecs_entity_has_all(world, id, system->require, system->exclude))
             system->process(world, id);
     }
 }
 
-void ecs_finish(ecs_world *world) {
+void ecs_process_finish(ecs_world *world) {
     world->dirty = 0;
 }
 

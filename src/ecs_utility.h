@@ -1,5 +1,5 @@
-#ifndef ECSTATIC_UTILITY_H
-#define ECSTATIC_UTILITY_H
+#ifndef ECSTATIC_ECS_UTILITY_H
+#define ECSTATIC_ECS_UTILITY_H
 
 #define ECS_EXPAND_INDEX(prefix, name, ...) prefix ## _ID_ ## name,
 
@@ -32,4 +32,4 @@
  * Macros for applications that use multiple sets of components registered at
  * different times. Component indices and masks are defined as variables. */
 
-#endif //ECSTATIC_UTILITY_H
+#endif //ECSTATIC_ECS_UTILITY_H

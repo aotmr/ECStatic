@@ -63,29 +63,29 @@ int ecs_register_system(ecs_world *world, const ecs_system *system);
 
 // Entity allocation
 
-uint32_t ecs_create(ecs_world *world);
+uint32_t ecs_create_entity(ecs_world *world);
 
-void ecs_destroy(ecs_world *world, uint32_t id);
+void ecs_destroy_entity(ecs_world *world, uint32_t id);
 
 // Component data
 
-void *ecs_add(ecs_world *world, uint32_t id, int ci);
+void *ecs_entity_add(ecs_world *world, uint32_t id, int ci);
 
-void ecs_remove(ecs_world *world, uint32_t id, int ci);
+void ecs_entity_remove(ecs_world *world, uint32_t id, int ci);
 
-static inline void *ecs_get(ecs_world *world, uint32_t id, int ci);
+static inline void *ecs_entity_get(ecs_world *world, uint32_t id, int ci);
 
-static inline bool ecs_has(ecs_world *world, uint32_t id, int ci);
+static inline bool ecs_entity_has(ecs_world *world, uint32_t id, int ci);
 
-static inline bool ecs_match(ecs_world *world, uint32_t id, uint64_t require, uint64_t exclude);
+static inline bool ecs_entity_has_all(ecs_world *world, uint32_t id, uint64_t require, uint64_t exclude);
 
 // System processing
 
-void ecs_begin(ecs_world *world);
+void ecs_process_begin(ecs_world *world);
 
-void ecs_process(ecs_world *world, int si);
+void ecs_process_system(ecs_world *world, int si);
 
-void ecs_finish(ecs_world *world);
+void ecs_process_finish(ecs_world *world);
 
 // Helper functions
 
@@ -93,18 +93,18 @@ void ecs_free_on_remove(ecs_world *world, uint32_t id, int ci, void *data);
 
 // Inline functions
 
-static inline void *ecs_get(ecs_world *world, uint32_t id, int ci) {
+static inline void *ecs_entity_get(ecs_world *world, uint32_t id, int ci) {
     assert(world != NULL);
     assert(id < world->max);
     assert(0 <= ci && ci < ECS_MAX_COMPS);
 
-    assert(ecs_has(world, id, ci));
+    assert(ecs_entity_has(world, id, ci));
 
     struct ecs_comp_s *comp = &world->comps[ci];
     return comp->data + comp->size * id;
 }
 
-static inline bool ecs_has(ecs_world *world, uint32_t id, int ci) {
+static inline bool ecs_entity_has(ecs_world *world, uint32_t id, int ci) {
     assert(world != NULL);
     assert(id < world->max);
     assert(0 <= ci && ci < ECS_MAX_COMPS);
@@ -112,7 +112,7 @@ static inline bool ecs_has(ecs_world *world, uint32_t id, int ci) {
     return (world->masks[id] & 1ULL << ci) != 0;
 }
 
-static inline bool ecs_match(ecs_world *world, uint32_t id, uint64_t require, uint64_t exclude) {
+static inline bool ecs_entity_has_all(ecs_world *world, uint32_t id, uint64_t require, uint64_t exclude) {
     assert(world != NULL);
     assert(id < world->max);
     assert((require & exclude) == 0);
