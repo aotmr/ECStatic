@@ -29,7 +29,7 @@ struct ecs_comp_s {
 struct ecs_system_s {
     uint64_t require, exclude;
 
-    void (*process)(ecs_world *world, uint32_t id);
+//    void (*process)(ecs_world *world, uint32_t id);
 
     int (*compare)(ecs_world *world, uint32_t id1, uint32_t id2);
 
@@ -83,7 +83,7 @@ static inline bool ecs_entity_has_all(ecs_world *world, uint32_t id, uint64_t re
 
 void ecs_process_begin(ecs_world *world);
 
-void ecs_process_system(ecs_world *world, int si);
+static inline void ecs_process_system(ecs_world *world, int si, void (*process)(ecs_world *world, uint32_t id));
 
 void ecs_process_finish(ecs_world *world);
 
@@ -120,6 +120,19 @@ static inline bool ecs_entity_has_all(ecs_world *world, uint32_t id, uint64_t re
     uint64_t mask = world->masks[id];
     return (mask & require) == require;
 //    return (mask & require) == require && ((mask & exclude) == 0);
+}
+
+static inline void ecs_process_system(ecs_world *world, int si, void (*process)(ecs_world *world, uint32_t id)) {
+    assert(world != NULL);
+    assert(0 <= si && si < ECS_MAX_SYSTEMS);
+
+    ecs_system *system = &world->systems[si];
+    assert(system->compare == NULL);
+
+    for (uint32_t id = 0; id < world->max; ++id) {
+        if (ecs_entity_has_all(world, id, system->require, system->exclude))
+            process(world, id);
+    }
 }
 
 #endif //ECSTATIC_ECS_H

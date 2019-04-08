@@ -133,19 +133,6 @@ void ecs_process_begin(ecs_world *world) {
 
 }
 
-void ecs_process_system(ecs_world *world, int si) {
-    assert(world != NULL);
-    assert(0 <= si && si < ECS_MAX_SYSTEMS);
-
-    ecs_system *system = &world->systems[si];
-    assert(system->compare == NULL);
-
-    for (uint32_t id = 0; id < world->max; ++id) {
-        if (ecs_entity_has_all(world, id, system->require, system->exclude))
-            system->process(world, id);
-    }
-}
-
 void ecs_process_finish(ecs_world *world) {
     world->dirty = 0;
 }
