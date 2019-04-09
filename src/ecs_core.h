@@ -127,7 +127,6 @@ static inline void ecs_process_system(ecs_world *world, int si, void (*process)(
     assert(0 <= si && si < ECS_MAX_SYSTEMS);
 
     ecs_system *system = &world->systems[si];
-    assert(system->compare == NULL);
 
     for (uint32_t i = 0; i < system->set_len; ++i)
         process(world, system->set[i]);

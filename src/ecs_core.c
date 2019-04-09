@@ -107,6 +107,9 @@ void *ecs_entity_add(ecs_world *world, uint32_t id, int ci) {
     void *data = comp->data + comp->size * id;
     if (comp->on_add)
         comp->on_add(world, id, ci, data);
+
+    // TODO: add/remove from systems as required
+
     return data;
 }
 
@@ -125,13 +128,15 @@ void ecs_entity_remove(ecs_world *world, uint32_t id, int ci) {
 
     world->masks[id] &= ~(1ULL << ci);
     world->dirty |= 1ULL << ci;
+
+    // TODO: add/remove from systems as required
 }
 
 // System processing
 
 void ecs_process_begin(ecs_world *world) {
     for (int si = 0; si < world->systems_num; ++si) {
-        ecs_system * system = &world->systems[si];
+        ecs_system *system = &world->systems[si];
         if ((system->require | system->exclude) & world->dirty) {
             uint32_t set_len = 0;
             for (uint32_t id = 0; id < world->max; ++id) {
@@ -140,7 +145,23 @@ void ecs_process_begin(ecs_world *world) {
             }
             system->set_len = set_len;
         }
+
+        /* TODO: Add functions for inserting/removing from a system set.
+         * This primitive can be used in building the sort as well. */
+
+        if (system->compare) {
+            for (uint32_t i = 1; i < system->set_len; ++i) {
+                uint32_t tmp = system->set[i];
+                uint32_t j = i;
+                while (j > 0 && system->compare(world, tmp, system->set[j - 1]) < 0) {
+                    system->set[j] = system->set[j - 1];
+                    j -= 1;
+                }
+                system->set[j] = tmp;
+            }
+        }
     }
+
     world->dirty = 0;
 }
 
@@ -150,5 +171,5 @@ void ecs_process_finish(ecs_world *world) {
 // Helper functions
 
 void ecs_free_on_remove(ecs_world *world, uint32_t id, int ci, void *data) {
-    free(data);
+    free(*(void **)data);
 }
