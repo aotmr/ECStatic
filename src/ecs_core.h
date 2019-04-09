@@ -33,8 +33,8 @@ struct ecs_system_s {
 
     int (*compare)(ecs_world *world, uint32_t id1, uint32_t id2);
 
-//    uint32_t set_len;
-//    uint32_t *set;
+    uint32_t set_len;
+    uint32_t *set;
 };
 
 struct ecs_world_s {
@@ -129,10 +129,8 @@ static inline void ecs_process_system(ecs_world *world, int si, void (*process)(
     ecs_system *system = &world->systems[si];
     assert(system->compare == NULL);
 
-    for (uint32_t id = 0; id < world->max; ++id) {
-        if (ecs_entity_has_all(world, id, system->require, system->exclude))
-            process(world, id);
-    }
+    for (uint32_t i = 0; i < system->set_len; ++i)
+        process(world, system->set[i]);
 }
 
 #endif //ECSTATIC_ECS_H

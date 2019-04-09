@@ -30,8 +30,8 @@ void ecs_release_world(ecs_world *world) {
     for (int i = 0; i < world->comps_num; ++i)
         free(world->comps[i].data);
 
-//    for (int i = 0; i < world->systems_num; ++i)
-//        free(world->systems[i].set);
+    for (int i = 0; i < world->systems_num; ++i)
+        free(world->systems[i].set);
 
     memset(world, 0, sizeof(ecs_world));
 }
@@ -56,14 +56,14 @@ int ecs_register_system(ecs_world *world, const ecs_system *system) {
 
     assert(world->systems_num < ECS_MAX_SYSTEMS);
     assert((system->require & system->exclude) == 0);
-//    assert(system->set_len == 0);
-//    assert(system->set == NULL);
+    assert(system->set_len == 0);
+    assert(system->set == NULL);
 
     int si = world->systems_num++;
     ecs_system *system2 = &world->systems[si];
     *system2 = *system;
-//    system2->set = calloc(world->max, sizeof(uint32_t));
-//    system2->set_len = 0;
+    system2->set = calloc(world->max, sizeof(uint32_t));
+    system2->set_len = 0;
 
     return si;
 }
@@ -130,11 +130,21 @@ void ecs_entity_remove(ecs_world *world, uint32_t id, int ci) {
 // System processing
 
 void ecs_process_begin(ecs_world *world) {
-
+    for (int si = 0; si < world->systems_num; ++si) {
+        ecs_system * system = &world->systems[si];
+        if ((system->require | system->exclude) & world->dirty) {
+            uint32_t set_len = 0;
+            for (uint32_t id = 0; id < world->max; ++id) {
+                if (ecs_entity_has_all(world, id, system->require, system->exclude))
+                    system->set[set_len++] = id;
+            }
+            system->set_len = set_len;
+        }
+    }
+    world->dirty = 0;
 }
 
 void ecs_process_finish(ecs_world *world) {
-    world->dirty = 0;
 }
 
 // Helper functions
